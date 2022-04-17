@@ -3,10 +3,14 @@
 const path = require('path');
 const express = require('express');
 const createError = require('http-errors');
+const connectMongo = require('connect-mongo');
 const logger = require('morgan');
 const sassMiddleware = require('node-sass-middleware');
+const session = require('express-session');
 const serveFavicon = require('serve-favicon');
 const baseRouter = require('./routes/base');
+const authentication = require('./middleware/authentication.js');
+const bindUserToViewLocals = require('./middleware/bind-user-to-view-locals.js');
 
 const app = express();
 
@@ -30,6 +34,8 @@ app.use(logger('dev'));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/', baseRouter);
+app.use(authentication);
+app.use(bindUserToViewLocals);
 
 // Catch missing routes and forward to error handler
 app.use((req, res, next) => {
@@ -44,5 +50,21 @@ app.use((error, req, res, next) => {
   res.status(error.status || 500);
   res.render('error');
 });
+
+app.use(
+  session({
+    // secret: process.env.SESSION_SECRET,
+    resave: true,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      httpOnly: true
+    },
+    store: connectMongo.create({
+      mongoUrl: process.env.MONGODB_URI,
+      ttl: 60 * 60
+    })
+  })
+);
 
 module.exports = app;
