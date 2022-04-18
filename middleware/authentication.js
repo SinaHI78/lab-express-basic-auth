@@ -8,12 +8,14 @@ module.exports = (req, res, next) => {
     User.findById(userId)
       .then((user) => {
         req.user = user;
+        console.log(req.user);
         next();
       })
       .catch((error) => {
         next(error);
       });
   } else {
+    console.log('no user in ' + req.session);
     next();
   }
 };

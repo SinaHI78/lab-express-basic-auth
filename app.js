@@ -17,6 +17,22 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
+app.use(
+  session({
+    secret: '123',
+    resave: true,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      httpOnly: true
+    },
+    store: connectMongo.create({
+      mongoUrl: process.env.MONGODB_URI,
+      ttl: 60 * 60
+    })
+  })
+);
+
 app.use(serveFavicon(path.join(__dirname, 'public/images', 'favicon.ico')));
 app.use(
   sassMiddleware({
@@ -33,8 +49,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(logger('dev'));
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/', baseRouter);
 app.use(authentication);
+app.use('/', baseRouter);
 app.use(bindUserToViewLocals);
 
 // Catch missing routes and forward to error handler
@@ -50,21 +66,5 @@ app.use((error, req, res, next) => {
   res.status(error.status || 500);
   res.render('error');
 });
-
-app.use(
-  session({
-    // secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 15 * 24 * 60 * 60 * 1000,
-      httpOnly: true
-    },
-    store: connectMongo.create({
-      mongoUrl: process.env.MONGODB_URI,
-      ttl: 60 * 60
-    })
-  })
-);
 
 module.exports = app;

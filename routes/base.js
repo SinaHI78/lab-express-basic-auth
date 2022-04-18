@@ -61,11 +61,16 @@ router.post('/login', (req, res, next) => {
 });
 
 router.get('/main', routeGuard, (req, res) => {
-  res.render('main');
+  console.log(req.user.name);
+  res.render('main', {
+    user: req.user
+  });
 });
 
 router.get('/private', routeGuard, (req, res) => {
-  res.render('private');
+  res.render('private', {
+    user: req.user
+  });
 });
 
 module.exports = router;
